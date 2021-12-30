@@ -1,31 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >= 0.8.7;
 
-// This external contract is used mainly to approve funds that helps with transferring celo
-interface IERC20Token {
-    function transfer(address, uint256) external returns (bool);
-
-    function approve(address, uint256) external returns (bool);
-
-    function transferFrom(
-        address,
-        address,
-        uint256
-    ) external returns (bool);
-
-    function totalSupply() external view returns (uint256);
-
-    function balanceOf(address) external view returns (uint256);
-
-    function allowance(address, address) external view returns (uint256);
-
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
-    );
-}
+import './stoke.sol';
 
 // my contract starts here
 
@@ -33,7 +9,7 @@ interface IERC20Token {
 // I will be glad if you can improvise it optimally for your own use
 // don't forget to show me ヾ(^▽^*)))
 
-contract AnimeRecomendation {
+contract Stoked {
     // this creates the structure for our Voters and Anime similar to class in OOP
     struct Voter {
         address address_;
@@ -52,8 +28,8 @@ contract AnimeRecomendation {
 
     }
 
-    address internal cUsdTokenAddress = 0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1; // this address is used for celo transaction with the interface contract
-    
+    Stoke stoke = Stoke(0x9C002b1C1E0e5A9D0cD4787AeE4e01f28a46aaa7);
+
     Anime [] public animes_; // array for where we keep our animes, with the Anime Struct
 
     mapping (address => Voter) internal voter_;
@@ -91,7 +67,7 @@ contract AnimeRecomendation {
         // ["Naruto", "https://i.pinimg.com/564x/d6/ca/b3/d6cab3d7ce263fbd44a6e190058ada84.jpg", "https://www.youtube.com/watch?v=mksl3tYdyK4", "Naruto is a Japanese manga series written and illustrated by Masashi Kishimoto. It tells the story of Naruto Uzumaki, a young ninja who seeks recognition from his peers and dreams of becoming the Hokage, the leader of his village"], 
         // ["One Piece", "https://i.pinimg.com/564x/73/08/6a/73086a49da74704f945eff83dab20af2.jpg", "https://www.youtube.com/watch?v=S8_YwFLCh4U", "Monkey D. Luffy, a young man who, inspired by his childhood idol and powerful pirate "Red Haired" Shanks, sets off on a journey from the East Blue Sea to find the titular treasure and proclaim himself the King of the Pirates. In an effort to organize his own crew, the Straw Hat Pirates"]]
 }
-        voter_[msg.sender].voteWeight = 10; // ensures that our creator can't vote
+        voter_[msg.sender].voteWeight = 4; // ensures that our creator can't vote more than twice
 
         for (uint8 i = 0; i < animeNames.length; i++) {
             animes_.push(Anime({
@@ -178,7 +154,7 @@ contract AnimeRecomendation {
         // require(!voter_[msg.sender].hasVoted, "You can only vote once");
         require(voter_[msg.sender].voteWeight < 6, "You can't vote more than 5 times");
         require(
-            IERC20Token(cUsdTokenAddress).transferFrom(
+            stoke.transferFrom(
                 msg.sender,
                 address(this),
                 cost
@@ -267,7 +243,7 @@ contract AnimeRecomendation {
         uint funds = totalVoteCount * cost; // All votes amount to the cost of 2
 
         require(
-            IERC20Token(cUsdTokenAddress).transfer(
+            stoke.transfer(
             payable(currentWinner),
             funds), 
             "Something went wrong!"

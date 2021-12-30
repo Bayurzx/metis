@@ -1,7 +1,7 @@
 import React from "react";
 import { Navbar, Container, Nav, Form, FormControl, Button } from 'react-bootstrap';
 
-import icon from "../celo-logo.png";
+import icon from "../some-logo.png";
 
 const Navigate = ({account}) => {
     return (
@@ -10,7 +10,7 @@ const Navigate = ({account}) => {
             <Navbar bg="light" expand="lg">
                 <Container>
                     <img src={icon} alt="celo" className="align-left inline-block mx-2" width="30" height="30" />
-                    <Navbar.Brand href="#">Your Recommendation</Navbar.Brand>
+                    <Navbar.Brand href="#">Stoked</Navbar.Brand>
                     <Navbar.Toggle aria-controls="navbarScroll" />
                     <Navbar.Collapse id="navbarScroll">
                         <Nav

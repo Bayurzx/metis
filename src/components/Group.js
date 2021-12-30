@@ -97,7 +97,7 @@ const Group = ({ currentGrp, donateToLike, winningName, totalVoteCount, payWinne
                     <h5 className="totalVoteText mt-3">
                         💰 {+totalVoteCount *2}
                         <br />
-                        Celo
+                        Seed
                         <br />
                         Staked
                         {/* {totalVote*2} */}

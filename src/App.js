@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import Web3 from 'web3';
-import { newKitFromWeb3 } from '@celo/contractkit';
 import BigNumber from 'bignumber.js';
 import { Tabs, Tab, Col, Toast, Button } from 'react-bootstrap';
 
@@ -9,17 +8,16 @@ import './extra/css/style.css'
 import Navigate from './components/Navigate'
 import AddItems from './components/AddItems';
 import Cards from './components/Cards';
-// import Toasts from './components/Toasts';
 
-import animeBallotAbi from './contracts/animeBallot.abi.json';
-import erc20Abi from './contracts/erc20.abi.json';
+import stokedAbi from './contracts/stoked.abi.json';
+import stokeTokenAbi from './contracts/stoke.abi.json';
 import Group from './components/Group';
 import PrevWin from './components/PrevWin';
 import Footer from './components/Footer';
 
 const MY_ERC20_DECIMALS = 10; // I will be using 10 instead of 18 
-const cUSDContractAddress = "0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1"
-const AnimeContractAddress = "0xc342bf51CFBB8400347Ba2132b79A266C42823F2"
+const stokeTokenAddress = "0x9C002b1C1E0e5A9D0cD4787AeE4e01f28a46aaa7"
+const StokedContractAddress = "0x5F528C36e47ECDfc4560121AF7Dd9428C4840BB3"
 
 const cost = 2; // this is the cost to donate
 
@@ -55,7 +53,7 @@ function App() {
   
   useEffect(() => {
     if (!kit) return ; // useeffect run first before checking dependecy, this ensure that it doesn't run before
-    loadCeloContract()
+    loadBlockchain()
   }, [kit])
 
   useEffect(() => {
@@ -84,11 +82,11 @@ function App() {
     )
   }
 
-  async function getCusd() {
+  async function getBalance() {
     if (!kit) return;
-    const celoBalance = await kit.getTotalBalance(kit.defaultAccount);
-    const cusdBalance = await celoBalance.cUSD.shiftedBy(-18).toFixed(2); 
-    setBalance(cusdBalance);
+    const ethBalance = await kit.eth.getBalance(address);
+    const etherBalance = await new BigNumber(ethBalance).shiftedBy(-18).toString(); 
+    setBalance(etherBalance);
   }
 
   async function donateToLike(animeName) {
@@ -96,14 +94,14 @@ function App() {
 
     const amount = new BigNumber(cost).shiftedBy(MY_ERC20_DECIMALS).toString();
 
-    const cusdContract = await new kit.web3.eth.Contract(erc20Abi, cUSDContractAddress)
+    const stokeTokenContract = await new kit.eth.Contract(stokeTokenAbi, stokeTokenAddress)
 
-    await cusdContract.methods.approve(AnimeContractAddress, amount)
-      .send({ from: kit.defaultAccount })
+    await stokeTokenContract.methods.approve(StokedContractAddress, amount)
+      .send({ from: address })
       .on('transactionHash', hash => {
         // voting transaction goes here
         contract.methods.voting(animeName)
-          .send({ from: kit.defaultAccount })
+          .send({ from: address })
           .on('transactionHash', hash => {
             contract.methods.isThereWinner().call()
               .then(res => {
@@ -149,7 +147,7 @@ function App() {
       setLoading(true);
       let createListReply = await contract.methods
       .createAnimeList(arr)
-      .send({from: kit.defaultAccount});
+      .send({from: address});
 
       setToaster({
         ...toaster,
@@ -213,11 +211,11 @@ function App() {
 
   function payWinner() {
     contract.methods.winningVoter()
-      .send({ from: kit.defaultAccount })
+      .send({ from: address })
       .on("transactionHash", hash => {
         console.log("All winning address has been selected");
         contract.methods.payWinner()
-          .send({ from: kit.defaultAccount })
+          .send({ from: address })
           .on("transactionHash", hash => {
             console.log("Payment was successful");
             contract.methods.previousWinner().call()
@@ -272,14 +270,14 @@ function App() {
   }
 
   async function loadWeb3() {
-    if (window.celo) {
+    if (window.ethereum) {
       try {
         // enable celo interaction
-        window.web3 = new Web3(window.celo);
-        await window.celo.enable();
-        let celoKit = newKitFromWeb3(window.web3);
-        await setKit(celoKit);
-        await getCusd()
+        window.web3 = new Web3(window.ethereum);
+        await window.ethereum.send('eth_requestAccounts');
+        // let celoKit = newKitFromWeb3(window.web3);
+        await setKit(window.web3);
+        await getBalance()
 
       }
       catch (error) {
@@ -290,31 +288,33 @@ function App() {
       window.web3.eth.net.getId()
         .then(async (res) => {
           if (res == 44787) {
-            window.ethereum.send('eth_requestAccounts');
-            let celoKit = newKitFromWeb3(window.web3);
-            await setKit(celoKit);
-            await getCusd()
+            // window.ethereum.send('eth_requestAccounts');
+            console.log('Hello currentProvider');
+            // let celoKit = newKitFromWeb3(window.web3);
+            await setKit(window.web3);
+            await getBalance()
             
           } else {
-            alert("You need to switch to celo network on metamask")
+            alert("You need to switch to Rinkeby network on metamask")
           }
         }).catch(error => console.error(error))
       // alert("You should access this with celo-browser extension")
     } else {
-      alert("Get the celo browser extension from chrome extensions")
+      alert("Get the Metamask extension from chrome extensions")
     }
   }
 
-  async function loadCeloContract() {
-    let address_ = await kit.web3.eth.getAccounts();
+  async function loadBlockchain() {
+    const web3 = window.web3;
+    let address_ = await web3.eth.getAccounts();
 
     // get and set default address
-    kit.defaultAccount = address_[0];
+    //kit.defaultAccount = address_[0];
     await setAddress(address_[0]);
 
 
     // sign and set contract
-    const myContract = new kit.web3.eth.Contract(animeBallotAbi, AnimeContractAddress);
+    const myContract = new web3.eth.Contract(stokedAbi, StokedContractAddress);
     await setContract(myContract);
 
   }
