@@ -25,5 +25,7 @@ yarn-error.log*
 # Local Netlify folder
 .netlify
 
+transcript.txt
+
 #others
 transcript.txt
